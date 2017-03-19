@@ -807,7 +807,7 @@ var LCARS = exports.LCARS = function () {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.LCARSEllipsisSpinner = exports.LCARSCalendar = exports.LCARSClock = exports.LCARSClockAnalog = exports.LCARSKeypad = exports.LCARSTextArea = exports.LCARSText = exports.LCARSButton = exports.LCARSIcon = exports.LCARSRectangle = exports.LCARSCorner = exports.LCARSComponent = undefined;
+exports.LCARSEllipsisSpinner = exports.LCARSCalendar = exports.LCARSClock = exports.LCARSClockAnalog = exports.LCARSKeypad = exports.LCARSTextArea = exports.LCARSText = exports.LCARSButton = exports.LCARSIcon = exports.LCARSIndicator = exports.LCARSRectangle = exports.LCARSCorner = exports.LCARSComponent = undefined;
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -850,6 +850,7 @@ var LCARSComponent = exports.LCARSComponent = function () {
 
         this.shapeElement = document.createElementNS(_LCARS.LCARS.svgNS, "path");
         this.textElement = document.createElementNS(_LCARS.LCARS.svgNS, "text");
+        this.iconElement = document.createElementNS(_LCARS.LCARS.svgNS, "path");
 
         /** Create the DOM object for shape animation, and set its attributes. */
         this.animateElement = document.createElementNS(_LCARS.LCARS.svgNS, "animate");
@@ -1197,12 +1198,14 @@ var LCARSComponent = exports.LCARSComponent = function () {
                 this.shapeElement.setAttribute("fill-opacity", '1.0');
                 this.shapeElement.setAttribute("stroke-width", '0');
                 this.textElement.setAttribute("fill", this.textColor);
+                this.iconElement.setAttribute("fill", this.textColor);
             } else {
                 this.element.setAttribute("pointer-events", "none");
                 this.shapeElement.setAttribute("stroke", this.color);
                 this.shapeElement.setAttribute("stroke-width", '2');
                 this.shapeElement.setAttribute("fill-opacity", '0.1');
                 this.textElement.setAttribute("fill", '#585858');
+                this.iconElement.setAttribute("fill", '#585858');
             }
         }
 
@@ -1263,12 +1266,17 @@ var LCARSComponent = exports.LCARSComponent = function () {
 
     }, {
         key: "offBlink",
-        value: function offBlink() {
+        value: function offBlink(_duration) {
+            var duration = _duration;
+            if (duration == undefined) {
+                duration = 100;
+            }
+
             var thisObject = this;
             thisObject.setVisible(false);
             setTimeout(function () {
                 thisObject.setVisible(true);
-            }, 10);
+            }, duration);
         }
 
         /**
@@ -1278,12 +1286,57 @@ var LCARSComponent = exports.LCARSComponent = function () {
 
     }, {
         key: "onBlink",
-        value: function onBlink() {
+        value: function onBlink(_duration) {
+            var duration = _duration;
+            if (duration == undefined) {
+                duration = 100;
+            }
+
             var thisObject = this;
             thisObject.setVisible(true);
             setTimeout(function () {
                 thisObject.setVisible(false);
-            }, 10);
+            }, duration);
+        }
+
+        /**
+         * Method to blink an enabled LCARS component "off" (make disabled) for 0.1 seconds.
+         * Used for things like activity indicators.
+         */
+
+    }, {
+        key: "offBlinkOutline",
+        value: function offBlinkOutline(_duration) {
+            var duration = _duration;
+            if (duration == undefined) {
+                duration = 100;
+            }
+
+            var thisObject = this;
+            thisObject.setEnabled(false);
+            setTimeout(function () {
+                thisObject.setEnabled(true);
+            }, duration);
+        }
+
+        /**
+         * Method to blink a disabled LCARS component "on" (make enabled) for 0.1 seconds.
+         * Used for things like activity indicators.
+         */
+
+    }, {
+        key: "onBlinkOutline",
+        value: function onBlinkOutline(_duration) {
+            var duration = _duration;
+            if (duration == undefined) {
+                duration = 100;
+            }
+
+            var thisObject = this;
+            thisObject.setEnabled(true);
+            setTimeout(function () {
+                thisObject.setEnabled(false);
+            }, duration);
         }
 
         /**
@@ -1382,11 +1435,15 @@ var LCARSComponent = exports.LCARSComponent = function () {
         key: "setIcon",
         value: function setIcon(svgString) {
             this.iconScale = " scale(1.5) ";
-            this.iconElement = document.createElementNS(_LCARS.LCARS.svgNS, "path");
 
             this.iconElement.setAttribute("d", svgString);
-            this.iconElement.setAttribute("transform", "scale(1.75)");
-            this.iconElement.setAttribute("fill", this.getTextColor());
+            this.iconElement.setAttribute("transform", this.iconScale);
+            //this.iconElement.setAttribute("fill", this.getTextColor());
+            if (this.properties & _LCARS.LCARS.ES_DISABLED) {
+                this.iconElement.setAttribute("fill", '#585858');
+            } else {
+                this.iconElement.setAttribute("fill", this.textColor);
+            }
 
             this.element.appendChild(this.iconElement);
         }
@@ -1610,22 +1667,99 @@ var LCARSRectangle = exports.LCARSRectangle = function (_LCARSComponent2) {
 }(LCARSComponent);
 
 /**
- * LCARS Icon
+ * LCARS Indicator component
  */
 
 
-var LCARSIcon = exports.LCARSIcon = function (_LCARSComponent3) {
-    _inherits(LCARSIcon, _LCARSComponent3);
+var LCARSIndicator = exports.LCARSIndicator = function (_LCARSComponent3) {
+    _inherits(LCARSIndicator, _LCARSComponent3);
+
+    function LCARSIndicator(name, label, x, y, width, height, properties) {
+        _classCallCheck(this, LCARSIndicator);
+
+        // Indicators are always static.
+        var _this3 = _possibleConstructorReturn(this, (LCARSIndicator.__proto__ || Object.getPrototypeOf(LCARSIndicator)).call(this, name, label, x, y, properties | _LCARS.LCARS.ES_STATIC));
+
+        _this3.width = width;
+        _this3.height = height;
+
+        _this3.drawShape();
+        _this3.drawText();
+
+        _this3.off(); // start in the off state
+        return _this3;
+    }
+
+    _createClass(LCARSIndicator, [{
+        key: "on",
+        value: function on() {
+            this.setBlinking(false);
+            this.setEnabled(true);
+        }
+    }, {
+        key: "off",
+        value: function off() {
+            this.setBlinking(false);
+            this.setEnabled(false);
+        }
+    }, {
+        key: "onBlink",
+        value: function onBlink(_duration) {
+            var duration = _duration;
+            if (duration == undefined) {
+                duration = 100;
+            }
+            this.onBlinkOutline(duration);
+        }
+    }, {
+        key: "offBlink",
+        value: function offBlink(_duration) {
+            var duration = _duration;
+            if (duration == undefined) {
+                duration = 100;
+            }
+            this.offBlinkOutline(duration);
+        }
+    }, {
+        key: "warning",
+        value: function warning(color) {
+            if (color == null || color == undefined) {
+                color = _LCARS.LCARS.EC_YELLOW;
+            }
+            this.on();
+            this.setBlinking(true, color, _LCARS.LCARS.BLINK_DURATION_WARNING);
+        }
+    }, {
+        key: "error",
+        value: function error(color) {
+            if (color == null || color == undefined) {
+                color = _LCARS.LCARS.EC_RED;
+            }
+            this.on();
+            this.setBlinking(true, color, _LCARS.LCARS.BLINK_DURATION_ERROR);
+        }
+    }]);
+
+    return LCARSIndicator;
+}(LCARSComponent);
+
+/**
+ * LCARS Icon component
+ */
+
+
+var LCARSIcon = exports.LCARSIcon = function (_LCARSComponent4) {
+    _inherits(LCARSIcon, _LCARSComponent4);
 
     function LCARSIcon(name, label, x, y, properties, svgString) {
         _classCallCheck(this, LCARSIcon);
 
-        var _this3 = _possibleConstructorReturn(this, (LCARSIcon.__proto__ || Object.getPrototypeOf(LCARSIcon)).call(this, name, label, x, y, properties));
+        var _this4 = _possibleConstructorReturn(this, (LCARSIcon.__proto__ || Object.getPrototypeOf(LCARSIcon)).call(this, name, label, x, y, properties | _LCARS.LCARS.ES_STATIC));
 
-        _this3.svgString = svgString;
+        _this4.svgString = svgString;
 
-        _this3.drawShape();
-        return _this3;
+        _this4.drawShape();
+        return _this4;
     }
 
     _createClass(LCARSIcon, [{
@@ -1637,6 +1771,31 @@ var LCARSIcon = exports.LCARSIcon = function (_LCARSComponent3) {
 
             this.element.appendChild(this.shapeElement);
         }
+    }, {
+        key: "setShapeAttributes",
+        value: function setShapeAttributes() {
+            this.shapeElement.setAttribute("id", this.id + _LCARS.LCARS.SHAPE_SUFFIX);
+            this.shapeElement.setAttribute("fill", this.color);
+            if (this.properties & _LCARS.LCARS.ES_DISABLED) {
+                this.shapeElement.setAttribute("fill-opacity", '0.4');
+            } else {
+                this.shapeElement.setAttribute("fill-opacity", '1.0');
+            }
+        }
+    }, {
+        key: "setEnabled",
+        value: function setEnabled(enable) {
+            if (enable) {
+                this.shapeElement.setAttribute("fill-opacity", '1.0');
+            } else {
+                this.shapeElement.setAttribute("fill-opacity", '0.4');
+            }
+        }
+    }, {
+        key: "scale",
+        value: function scale(scaleFactor) {
+            this.shapeElement.setAttribute("transform", "scale(" + scaleFactor + ")");
+        }
     }]);
 
     return LCARSIcon;
@@ -1647,36 +1806,36 @@ var LCARSIcon = exports.LCARSIcon = function (_LCARSComponent3) {
  */
 
 
-var LCARSButton = exports.LCARSButton = function (_LCARSComponent4) {
-    _inherits(LCARSButton, _LCARSComponent4);
+var LCARSButton = exports.LCARSButton = function (_LCARSComponent5) {
+    _inherits(LCARSButton, _LCARSComponent5);
 
     function LCARSButton(name, label, x, y, height, properties, auxLabel, auxLabelProperties) {
         _classCallCheck(this, LCARSButton);
 
-        var _this4 = _possibleConstructorReturn(this, (LCARSButton.__proto__ || Object.getPrototypeOf(LCARSButton)).call(this, name, label, x, y, properties));
+        var _this5 = _possibleConstructorReturn(this, (LCARSButton.__proto__ || Object.getPrototypeOf(LCARSButton)).call(this, name, label, x, y, properties));
 
-        _this4.auxLabel = auxLabel;
-        _this4.auxLabelProperties = auxLabelProperties;
+        _this5.auxLabel = auxLabel;
+        _this5.auxLabelProperties = auxLabelProperties;
 
-        _this4.width = _LCARS.LCARS.LCARS_BTN_WIDTH;
+        _this5.width = _LCARS.LCARS.LCARS_BTN_WIDTH;
 
         if ((properties & _LCARS.LCARS.ES_RECT_RND) == 0) {
-            _this4.height = height * _LCARS.LCARS.LCARS_BTN_HEIGHT + (height - 1) * _LCARS.LCARS.LCARS_BTN_SPACING;
+            _this5.height = height * _LCARS.LCARS.LCARS_BTN_HEIGHT + (height - 1) * _LCARS.LCARS.LCARS_BTN_SPACING;
         } else {
-            _this4.height = _LCARS.LCARS.LCARS_BTN_HEIGHT;
+            _this5.height = _LCARS.LCARS.LCARS_BTN_HEIGHT;
         }
 
-        if ((_this4.properties & _LCARS.LCARS.ES_FONT) == _LCARS.LCARS.EF_NORMAL) {
-            _this4.fontSize = _LCARS.LCARS.FONT_BUTTON_SIZE; // the default font for button components
+        if ((_this5.properties & _LCARS.LCARS.ES_FONT) == _LCARS.LCARS.EF_NORMAL) {
+            _this5.fontSize = _LCARS.LCARS.FONT_BUTTON_SIZE; // the default font for button components
         }
 
-        _this4.drawShape();
-        _this4.drawText();
+        _this5.drawShape();
+        _this5.drawText();
 
-        if (_this4.auxLabel != "" && _this4.auxLabel != undefined) {
-            _this4.drawAuxText();
+        if (_this5.auxLabel != "" && _this5.auxLabel != undefined) {
+            _this5.drawAuxText();
         }
-        return _this4;
+        return _this5;
     }
 
     _createClass(LCARSButton, [{
@@ -1810,23 +1969,23 @@ var LCARSButton = exports.LCARSButton = function (_LCARSComponent4) {
  */
 
 
-var LCARSText = exports.LCARSText = function (_LCARSComponent5) {
-    _inherits(LCARSText, _LCARSComponent5);
+var LCARSText = exports.LCARSText = function (_LCARSComponent6) {
+    _inherits(LCARSText, _LCARSComponent6);
 
     function LCARSText(name, label, x, y, properties) {
         _classCallCheck(this, LCARSText);
 
-        var _this5 = _possibleConstructorReturn(this, (LCARSText.__proto__ || Object.getPrototypeOf(LCARSText)).call(this, name, label, x, y, properties));
+        var _this6 = _possibleConstructorReturn(this, (LCARSText.__proto__ || Object.getPrototypeOf(LCARSText)).call(this, name, label, x, y, properties));
 
-        _this5.static = _LCARS.LCARS.ES_STATIC; // Text is always static.
-        _this5.textColor = _this5.getColor();
+        _this6.static = _LCARS.LCARS.ES_STATIC; // Text is always static.
+        _this6.textColor = _this6.getColor();
 
-        _this5.drawText();
+        _this6.drawText();
 
-        if (_this5.blinking) {
-            _this5.setBlinking(true);
+        if (_this6.blinking) {
+            _this6.setBlinking(true);
         }
-        return _this5;
+        return _this6;
     }
 
     _createClass(LCARSText, [{
@@ -1891,28 +2050,28 @@ var LCARSText = exports.LCARSText = function (_LCARSComponent5) {
  */
 
 
-var LCARSTextArea = exports.LCARSTextArea = function (_LCARSComponent6) {
-    _inherits(LCARSTextArea, _LCARSComponent6);
+var LCARSTextArea = exports.LCARSTextArea = function (_LCARSComponent7) {
+    _inherits(LCARSTextArea, _LCARSComponent7);
 
     function LCARSTextArea(name, label, x, y, width, rows, properties) {
         _classCallCheck(this, LCARSTextArea);
 
-        var _this6 = _possibleConstructorReturn(this, (LCARSTextArea.__proto__ || Object.getPrototypeOf(LCARSTextArea)).call(this, name, label, x, y, properties));
+        var _this7 = _possibleConstructorReturn(this, (LCARSTextArea.__proto__ || Object.getPrototypeOf(LCARSTextArea)).call(this, name, label, x, y, properties));
 
-        _this6.composite = false;
-        _this6.static = _LCARS.LCARS.ES_STATIC; // TextAreas are always static.
-        _this6.textColor = _this6.getColor();
+        _this7.composite = false;
+        _this7.static = _LCARS.LCARS.ES_STATIC; // TextAreas are always static.
+        _this7.textColor = _this7.getColor();
 
-        _this6.width = width;
-        _this6.rows = rows;
+        _this7.width = width;
+        _this7.rows = rows;
 
-        _this6.lineSpacing = 1.0;
+        _this7.lineSpacing = 1.0;
 
-        _this6.nowrap = true; // Default to not wrapping lines of text
-        _this6.canvasFont = Math.round(_this6.fontSize * 1.1) + "pt " + _LCARS.LCARS.getFont();
+        _this7.nowrap = true; // Default to not wrapping lines of text
+        _this7.canvasFont = Math.round(_this7.fontSize * 1.1) + "pt " + _LCARS.LCARS.getFont();
 
-        _this6.drawText();
-        return _this6;
+        _this7.drawText();
+        return _this7;
     }
 
     _createClass(LCARSTextArea, [{
@@ -2108,20 +2267,20 @@ var LCARSTextArea = exports.LCARSTextArea = function (_LCARSComponent6) {
  */
 
 
-var LCARSKeypad = exports.LCARSKeypad = function (_LCARSComponent7) {
-    _inherits(LCARSKeypad, _LCARSComponent7);
+var LCARSKeypad = exports.LCARSKeypad = function (_LCARSComponent8) {
+    _inherits(LCARSKeypad, _LCARSComponent8);
 
     function LCARSKeypad(name, x, y, properties, auxLabelProperties) {
         _classCallCheck(this, LCARSKeypad);
 
         /** Keypads don't have labels */
 
-        var _this7 = _possibleConstructorReturn(this, (LCARSKeypad.__proto__ || Object.getPrototypeOf(LCARSKeypad)).call(this, name, "", x, y, properties));
+        var _this8 = _possibleConstructorReturn(this, (LCARSKeypad.__proto__ || Object.getPrototypeOf(LCARSKeypad)).call(this, name, "", x, y, properties));
 
-        _this7.auxLabelProperties = auxLabelProperties;
+        _this8.auxLabelProperties = auxLabelProperties;
 
-        _this7.drawShape();
-        return _this7;
+        _this8.drawShape();
+        return _this8;
     }
 
     _createClass(LCARSKeypad, [{
@@ -2263,34 +2422,34 @@ var LCARSKeypad = exports.LCARSKeypad = function (_LCARSComponent7) {
  */
 
 
-var LCARSClockAnalog = exports.LCARSClockAnalog = function (_LCARSComponent8) {
-    _inherits(LCARSClockAnalog, _LCARSComponent8);
+var LCARSClockAnalog = exports.LCARSClockAnalog = function (_LCARSComponent9) {
+    _inherits(LCARSClockAnalog, _LCARSComponent9);
 
     function LCARSClockAnalog(name, label, x, y, radius, properties, updateInterval, format) {
         _classCallCheck(this, LCARSClockAnalog);
 
-        var _this8 = _possibleConstructorReturn(this, (LCARSClockAnalog.__proto__ || Object.getPrototypeOf(LCARSClockAnalog)).call(this, name, label, x, y, properties));
+        var _this9 = _possibleConstructorReturn(this, (LCARSClockAnalog.__proto__ || Object.getPrototypeOf(LCARSClockAnalog)).call(this, name, label, x, y, properties));
 
-        _this8.static = _LCARS.LCARS.ES_STATIC; // Text is always static.
-        _this8.textColor = _this8.getColor();
+        _this9.static = _LCARS.LCARS.ES_STATIC; // Text is always static.
+        _this9.textColor = _this9.getColor();
 
         /** Set the size of the clock face. */
-        _this8.element.style.height = radius * 2 + "px";
-        _this8.element.style.width = radius * 2 + "px";
+        _this9.element.style.height = radius * 2 + "px";
+        _this9.element.style.width = radius * 2 + "px";
 
-        _this8.radius = radius;
+        _this9.radius = radius;
 
-        _this8.updateInterval = updateInterval;
-        _this8.format = format;
+        _this9.updateInterval = updateInterval;
+        _this9.format = format;
 
-        _this8.intervalVariable = null;
+        _this9.intervalVariable = null;
 
-        _this8.drawShape();
+        _this9.drawShape();
 
-        _this8.update();
+        _this9.update();
 
-        _this8.start();
-        return _this8;
+        _this9.start();
+        return _this9;
     }
 
     /**
@@ -2444,27 +2603,27 @@ var LCARSClockAnalog = exports.LCARSClockAnalog = function (_LCARSComponent8) {
  */
 
 
-var LCARSClock = function (_LCARSComponent9) {
-    _inherits(LCARSClock, _LCARSComponent9);
+var LCARSClock = function (_LCARSComponent10) {
+    _inherits(LCARSClock, _LCARSComponent10);
 
     function LCARSClock(name, label, x, y, properties, format) {
         _classCallCheck(this, LCARSClock);
 
-        var _this9 = _possibleConstructorReturn(this, (LCARSClock.__proto__ || Object.getPrototypeOf(LCARSClock)).call(this, name, label, x, y, properties));
+        var _this10 = _possibleConstructorReturn(this, (LCARSClock.__proto__ || Object.getPrototypeOf(LCARSClock)).call(this, name, label, x, y, properties));
 
-        _this9.static = _LCARS.LCARS.ES_STATIC; // Text is always static.
-        _this9.textColor = _this9.getColor();
+        _this10.static = _LCARS.LCARS.ES_STATIC; // Text is always static.
+        _this10.textColor = _this10.getColor();
 
-        _this9.format = format;
+        _this10.format = format;
 
-        _this9.timeoutVariable = null;
+        _this10.timeoutVariable = null;
 
-        _this9.drawText();
+        _this10.drawText();
 
-        _this9.update();
+        _this10.update();
 
-        _this9.start();
-        return _this9;
+        _this10.start();
+        return _this10;
     }
 
     /**
@@ -2720,41 +2879,41 @@ var MAX_DAYS_IN_MONTH_DISPLAY = 42; /** 6 lines of 7 days */
  * Aversion 1.0
  */
 
-var LCARSCalendar = exports.LCARSCalendar = function (_LCARSComponent10) {
-    _inherits(LCARSCalendar, _LCARSComponent10);
+var LCARSCalendar = exports.LCARSCalendar = function (_LCARSComponent11) {
+    _inherits(LCARSCalendar, _LCARSComponent11);
 
     function LCARSCalendar(name, x, y, font_size, daySpacing, properties) {
         _classCallCheck(this, LCARSCalendar);
 
         /** Calendar doesn't have a label. */
-        var _this10 = _possibleConstructorReturn(this, (LCARSCalendar.__proto__ || Object.getPrototypeOf(LCARSCalendar)).call(this, name, "", x, y, properties | _LCARS.LCARS.ES_LABEL_E));
+        var _this11 = _possibleConstructorReturn(this, (LCARSCalendar.__proto__ || Object.getPrototypeOf(LCARSCalendar)).call(this, name, "", x, y, properties | _LCARS.LCARS.ES_LABEL_E));
 
-        _this10.static = _LCARS.LCARS.ES_STATIC; /** Calendar is always static. */
-        _this10.textColor = _this10.getColor();
+        _this11.static = _LCARS.LCARS.ES_STATIC; /** Calendar is always static. */
+        _this11.textColor = _this11.getColor();
 
-        _this10.font_size = font_size;
+        _this11.font_size = font_size;
 
-        _this10.daySpacing = daySpacing;
+        _this11.daySpacing = daySpacing;
 
         /** Set the curretn day as today. */
-        _this10.setToday();
+        _this11.setToday();
 
-        _this10.intervalVariable = null;
+        _this11.intervalVariable = null;
 
         /** Set the initial displayed month and year. */
-        _this10.displayMonth = _this10.currentMonth;
-        _this10.displayYear = _this10.currentYear;
+        _this11.displayMonth = _this11.currentMonth;
+        _this11.displayYear = _this11.currentYear;
 
         /** Create an array to hold 6 lines of 7 days. */
-        _this10.displayDays = new Array(MAX_DAYS_IN_MONTH_DISPLAY);
+        _this11.displayDays = new Array(MAX_DAYS_IN_MONTH_DISPLAY);
 
         /** Draw the calendar SVG shape. */
-        _this10.drawShape();
+        _this11.drawShape();
 
         /** Populate the calendar with month, year, and days. */
-        _this10.updateCalendar();
+        _this11.updateCalendar();
 
-        return _this10;
+        return _this11;
     }
 
     /**
@@ -3230,52 +3389,52 @@ var LCARSCalendar = exports.LCARSCalendar = function (_LCARSComponent10) {
  */
 
 
-var LCARSEllipsisSpinner = exports.LCARSEllipsisSpinner = function (_LCARSComponent11) {
-    _inherits(LCARSEllipsisSpinner, _LCARSComponent11);
+var LCARSEllipsisSpinner = exports.LCARSEllipsisSpinner = function (_LCARSComponent12) {
+    _inherits(LCARSEllipsisSpinner, _LCARSComponent12);
 
     function LCARSEllipsisSpinner(id, x, y, properties) {
         _classCallCheck(this, LCARSEllipsisSpinner);
 
-        var _this11 = _possibleConstructorReturn(this, (LCARSEllipsisSpinner.__proto__ || Object.getPrototypeOf(LCARSEllipsisSpinner)).call(this, id, "", x, y, properties));
+        var _this12 = _possibleConstructorReturn(this, (LCARSEllipsisSpinner.__proto__ || Object.getPrototypeOf(LCARSEllipsisSpinner)).call(this, id, "", x, y, properties));
 
-        _this11.animated = false;
+        _this12.animated = false;
 
-        _this11.radius = _this11.fontSize / 10;
-
-        /* Create the DOM object for the first period shape animation, and set its attributes. */
-        _this11.animateElement1 = document.createElementNS(_LCARS.LCARS.svgNS, "animate");
-        _this11.animateElement1.setAttribute("id", _this11.element.id + "_shape_1_Animate");
-        _this11.animateElement1.setAttribute("attributeType", "XML");
-        _this11.animateElement1.setAttribute("attributeName", "opacity");
-        _this11.animateElement1.setAttribute("repeatCount", "indefinite");
-        _this11.animateElement1.setAttribute("dur", "1s");
-        _this11.animateElement1.setAttribute("values", "0;1;0");
-        _this11.animateElement1.setAttribute("begin", "0.1");
+        _this12.radius = _this12.fontSize / 10;
 
         /* Create the DOM object for the first period shape animation, and set its attributes. */
-        _this11.animateElement2 = document.createElementNS(_LCARS.LCARS.svgNS, "animate");
-        _this11.animateElement2.setAttribute("id", _this11.element.id + "_shape_2_Animate");
-        _this11.animateElement2.setAttribute("attributeType", "XML");
-        _this11.animateElement2.setAttribute("attributeName", "opacity");
-        _this11.animateElement2.setAttribute("repeatCount", "indefinite");
-        _this11.animateElement2.setAttribute("dur", "1s");
-        _this11.animateElement2.setAttribute("values", "0;1;0");
-        _this11.animateElement2.setAttribute("begin", "0.2");
+        _this12.animateElement1 = document.createElementNS(_LCARS.LCARS.svgNS, "animate");
+        _this12.animateElement1.setAttribute("id", _this12.element.id + "_shape_1_Animate");
+        _this12.animateElement1.setAttribute("attributeType", "XML");
+        _this12.animateElement1.setAttribute("attributeName", "opacity");
+        _this12.animateElement1.setAttribute("repeatCount", "indefinite");
+        _this12.animateElement1.setAttribute("dur", "1s");
+        _this12.animateElement1.setAttribute("values", "0;1;0");
+        _this12.animateElement1.setAttribute("begin", "0.1");
 
         /* Create the DOM object for the first period shape animation, and set its attributes. */
-        _this11.animateElement3 = document.createElementNS(_LCARS.LCARS.svgNS, "animate");
-        _this11.animateElement3.setAttribute("id", _this11.element.id + "_shape_3_Animate");
-        _this11.animateElement3.setAttribute("attributeType", "XML");
-        _this11.animateElement3.setAttribute("attributeName", "opacity");
-        _this11.animateElement3.setAttribute("repeatCount", "indefinite");
-        _this11.animateElement3.setAttribute("dur", "1s");
-        _this11.animateElement3.setAttribute("values", "0;1;0");
-        _this11.animateElement3.setAttribute("begin", "0.3");
+        _this12.animateElement2 = document.createElementNS(_LCARS.LCARS.svgNS, "animate");
+        _this12.animateElement2.setAttribute("id", _this12.element.id + "_shape_2_Animate");
+        _this12.animateElement2.setAttribute("attributeType", "XML");
+        _this12.animateElement2.setAttribute("attributeName", "opacity");
+        _this12.animateElement2.setAttribute("repeatCount", "indefinite");
+        _this12.animateElement2.setAttribute("dur", "1s");
+        _this12.animateElement2.setAttribute("values", "0;1;0");
+        _this12.animateElement2.setAttribute("begin", "0.2");
 
-        _this11.drawShape();
+        /* Create the DOM object for the first period shape animation, and set its attributes. */
+        _this12.animateElement3 = document.createElementNS(_LCARS.LCARS.svgNS, "animate");
+        _this12.animateElement3.setAttribute("id", _this12.element.id + "_shape_3_Animate");
+        _this12.animateElement3.setAttribute("attributeType", "XML");
+        _this12.animateElement3.setAttribute("attributeName", "opacity");
+        _this12.animateElement3.setAttribute("repeatCount", "indefinite");
+        _this12.animateElement3.setAttribute("dur", "1s");
+        _this12.animateElement3.setAttribute("values", "0;1;0");
+        _this12.animateElement3.setAttribute("begin", "0.3");
 
-        _this11.start();
-        return _this11;
+        _this12.drawShape();
+
+        _this12.start();
+        return _this12;
     }
 
     _createClass(LCARSEllipsisSpinner, [{
@@ -3367,6 +3526,8 @@ var BATTERY_FULL = "M21 6h-21v12h21v-12zm1 9h.75c.69 0 1.25-.56 1.25-1.25v-3.5c0
 var BATTERY_EMPTY = "M19 8v8h-17v-8h17zm2-2h-21v12h21v-12zm1 9h.75c.69 0 1.25-.56 1.25-1.25v-3.5c0-.69-.56-1.25-1.25-1.25h-.75v6z";
 
 var BATTERY_ON_AC = "M0 18h21v-12h-21v12zm5-7h2.998c1.384 0 .965-2 6.002-2v1h1.499c.277 0 .501.224.501.5s-.224.5-.501.5h-1.499v2h1.499c.277 0 .501.224.501.5s-.224.5-.501.5h-1.499v1c-5 0-4.627-2-6-2h-3v-2zm19-.75v3.5c0 .69-.56 1.25-1.25 1.25h-.75v-6h.75c.69 0 1.25.56 1.25 1.25z";
+
+var BATTERY_ON_AC_NEGATIVE = "M19 8v8h-17v-8h17zm2-2h-21v12h21v-12zm1 9h.75c.69 0 1.25-.56 1.25-1.25v-3.5c0-.69-.56-1.25-1.25-1.25h-.75v6zm-6.501-2h-1.499v-2h1.499c.277 0 .501-.224.501-.5s-.224-.5-.501-.5h-1.499v-1c-5.037 0-4.618 2-6.002 2h-2.998v2h3c1.373 0 1 2 6 2v-1h1.499c.277 0 .501-.224.501-.5s-.224-.5-.501-.5z";
 
 var WEATHER_PARTLY_CLOUDY_DAY = "M2.396 12h-2.396v-2h2.396v2zm7.604-6.458v-3.542h-2v3.542h2zm-4.793.876l-2.156-2.156-1.414 1.414 2.156 2.156 1.414-1.414zm9.461-2.396l-2.115 2.114 1.414 1.414 2.115-2.114-1.414-1.414zm-11.7 10.907l-2.198 1.919 1.303 1.517 2.198-1.919-1.303-1.517zm21.032 2.793c0 2.362-1.95 4.278-4.354 4.278h-10.292c-2.404 0-4.354-1.916-4.354-4.278 0-.77.211-1.49.574-2.113-.964-.907-1.574-2.18-1.574-3.609 0-2.762 2.238-5 5-5 1.329 0 2.523.528 3.414 1.376.649-.24 1.35-.376 2.086-.376 3.171 0 5.753 2.443 5.921 5.516 2.034.359 3.579 2.105 3.579 4.206zm-18-5.722c0 .86.37 1.628.955 2.172.485-.316 1.029-.551 1.624-.656.088-1.61.843-3.042 1.994-4.046-.46-.288-.991-.47-1.573-.47-1.654 0-3 1.346-3 3zm16 5.722c0-2.076-1.979-2.618-3.489-2.512.218-1.439-.24-5.21-4.011-5.21-3.875 0-4.062 3.854-4.011 5.209-1.385-.084-3.489.395-3.489 2.513 0 1.256 1.056 2.278 2.354 2.278h10.291c1.299 0 2.355-1.022 2.355-2.278z";
 
@@ -3612,7 +3773,7 @@ var ICONS = exports.ICONS = function () {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.LCARSBasicScreen = exports.LCARSBlankScreen = undefined;
+exports.HTTPStatusScreen = exports.LCARSBasicScreen = exports.LCARSBlankScreen = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -3645,6 +3806,11 @@ var LCARSScreen = function () {
 
         document.body.style.MozUserSelect = 'none';
         document.body.style.WebkitUserSelect = 'none';
+
+        this.LEFT = 10;
+        this.TOP = 5;
+        this.RIGHT = 10;
+        this.BOTTOM = 15;
 
         this.element = document.createElementNS(_LCARS.LCARS.svgNS, "svg");
 
@@ -3734,7 +3900,7 @@ var LCARSScreen = function () {
 }();
 
 /**
- * Blank Screen - No header or footer
+ * Blank Screen - No header or footer or title
  */
 
 
@@ -3745,11 +3911,6 @@ var LCARSBlankScreen = exports.LCARSBlankScreen = function (_LCARSScreen) {
         _classCallCheck(this, LCARSBlankScreen);
 
         var _this = _possibleConstructorReturn(this, (LCARSBlankScreen.__proto__ || Object.getPrototypeOf(LCARSBlankScreen)).call(this, id, title, width, height, properties));
-
-        _this.LEFT = 10;
-        _this.TOP = 5;
-        _this.RIGHT = 10;
-        _this.BOTTOM = 15;
 
         _this.drawScreen();
 
@@ -3772,11 +3933,6 @@ var LCARSBasicScreen = exports.LCARSBasicScreen = function (_LCARSScreen2) {
 
         var _this2 = _possibleConstructorReturn(this, (LCARSBasicScreen.__proto__ || Object.getPrototypeOf(LCARSBasicScreen)).call(this, id, title, width, height, properties));
 
-        _this2.LEFT = 10;
-        _this2.TOP = 5;
-        _this2.RIGHT = 10;
-        _this2.BOTTOM = 15;
-
         _this2.drawScreen();
 
         _this2.drawHeader();
@@ -3786,6 +3942,105 @@ var LCARSBasicScreen = exports.LCARSBasicScreen = function (_LCARSScreen2) {
     }
 
     return LCARSBasicScreen;
+}(LCARSScreen);
+
+var HTTP_STATUS_CODES = {
+    '200': 'OK',
+    '201': 'Created',
+    '202': 'Accepted',
+    '203': 'Non-Authoritative Information',
+    '204': 'No Content',
+    '205': 'Reset Content',
+    '206': 'Partial Content',
+    '300': 'Multiple Choices',
+    '301': 'Moved Permanently',
+    '302': 'Found',
+    '303': 'See Other',
+    '304': 'Not Modified',
+    '305': 'Use Proxy',
+    '307': 'Temporary Redirect',
+    '400': 'Bad Request',
+    '401': 'Unauthorized',
+    '402': 'Payment Required',
+    '403': 'Forbidden',
+    '404': 'Not Found',
+    '405': 'Method Not Allowed',
+    '406': 'Not Acceptable',
+    '407': 'Proxy Authentication Required',
+    '408': 'Request Timeout',
+    '409': 'Conflict',
+    '410': 'Gone',
+    '411': 'Length Required',
+    '412': 'Precondition Failed',
+    '413': 'Request Entity Too Large',
+    '414': 'Request-URI Too Long',
+    '415': 'Unsupported Media Type',
+    '416': 'Requested Range Not Satisfiable',
+    '417': 'Expectation Failed',
+    '500': 'Internal Server Error',
+    '501': 'Not Implemented',
+    '502': 'Bad Gateway',
+    '503': 'Service Unavailable',
+    '504': 'Gateway Timeout',
+    '505': 'HTTP Version Not Supported'
+};
+
+/**
+ * HTTP Status Screen - Includes a header, including the HTTP status as the screen title, and a footer.
+ */
+
+var HTTPStatusScreen = exports.HTTPStatusScreen = function (_LCARSScreen3) {
+    _inherits(HTTPStatusScreen, _LCARSScreen3);
+
+    function HTTPStatusScreen(id, width, height, properties, statusCode, statusDetailMessage) {
+        _classCallCheck(this, HTTPStatusScreen);
+
+        var _this3 = _possibleConstructorReturn(this, (HTTPStatusScreen.__proto__ || Object.getPrototypeOf(HTTPStatusScreen)).call(this, id, statusCode + " - " + HTTP_STATUS_CODES[statusCode].toUpperCase(), width, height, properties));
+
+        _this3.statusCode = statusCode;
+        _this3.statusDetailMessage = statusDetailMessage;
+        _this3.statusMessage = "Unknown";
+
+        if (statusCode >= 200 && statusCode < 300) {
+            _this3.statusMessage = "Success";
+        } else if (statusCode >= 300 && statusCode < 400) {
+            _this3.statusMessage = "Redirection";
+        } else if (statusCode >= 400 && statusCode < 500) {
+            _this3.statusMessage = "Access Denied";
+        } else if (statusCode >= 500 && statusCode < 600) {
+            _this3.statusMessage = "Server Error";
+        }
+
+        _this3.drawHeader();
+
+        _this3.drawFooter();
+
+        _this3.drawScreen();
+
+        return _this3;
+    }
+
+    _createClass(HTTPStatusScreen, [{
+        key: 'drawScreen',
+        value: function drawScreen() {
+
+            var startx = this.width * 0.12;
+            var starty = this.height * 0.25;
+            var indentx = startx + 100;
+
+            this.text_message = new _LCARSComponents.LCARSText(this.id + "_text_message", this.statusMessage.toUpperCase(), startx, starty, _LCARS.LCARS.EF_TITLE | _LCARS.LCARS.EC_RED);
+            this.text_message.setTextFontSize(110);
+            this.addComponent(this.text_message);
+
+            this.text_message_sub_1 = new _LCARSComponents.LCARSText(this.id + "_text_message_sub_1", this.statusDetailMessage.toUpperCase(), indentx, starty + 100, _LCARS.LCARS.EF_SUBTITLE | _LCARS.LCARS.EC_RED);
+            this.addComponent(this.text_message_sub_1);
+
+            this.text_message_sub_2 = new _LCARSComponents.LCARSText(this.id + "_text_message_sub_2", "STATUS: " + this.title, indentx, starty + 150, _LCARS.LCARS.EF_SUBTITLE | _LCARS.LCARS.EC_RED);
+            this.addComponent(this.text_message_sub_2);
+        }
+    }]);
+
+    return HTTPStatusScreen;
 }(LCARSScreen);
 
 /***/ }),
@@ -3837,14 +4092,38 @@ testScreen.addComponent(ulc8);
 var text_corner = new _LCARSComponents.LCARSText("text_corner", "LCARS Button Text Corner", 1625, 579 + _LCARS.LCARS.FONT_BUTTON_SIZE - 3, _LCARS.LCARS.EF_BUTTON | _LCARS.LCARS.EC_ORANGE);
 testScreen.addComponent(text_corner);
 
-var rect_1 = new _LCARSComponents.LCARSRectangle("RECT1", "", 10, 675, 1000, 30, _LCARS.LCARS.EC_ORANGE | _LCARS.LCARS.ES_BLINKING);
-testScreen.addComponent(rect_1);
-rect_1.setVisible(false);
+var indicator_1 = new _LCARSComponents.LCARSIndicator("indicator_1", "indicator_off", 10, 680, 150, 60, _LCARS.LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_1);
+var indicator_2 = new _LCARSComponents.LCARSIndicator("indicator_2", "indicator_on", 170, 680, 150, 60, _LCARS.LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_2);
+indicator_2.on();
+var indicator_3 = new _LCARSComponents.LCARSIndicator("indicator_3", "indicator_warn", 330, 680, 150, 60, _LCARS.LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_3);
+indicator_3.warning();
+var indicator_4 = new _LCARSComponents.LCARSIndicator("indicator_4", "indicator_error", 490, 680, 150, 60, _LCARS.LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_4);
+indicator_4.error();
+var indicator_5 = new _LCARSComponents.LCARSIndicator("indicator_5", "blink_off", 650, 680, 150, 60, _LCARS.LCARS.ES_RECT_RND | _LCARS.LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_5);
+indicator_5.error();
+indicator_5.off();
+var indicator_6 = new _LCARSComponents.LCARSIndicator("indicator_6", "off_blink", 810, 680, 150, 60, _LCARS.LCARS.ES_LABEL_W | _LCARS.LCARS.ES_RECT_RND_W | _LCARS.LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_6);
+indicator_6.on();
+setInterval(function () {
+    indicator_6.offBlink();
+}, 500);
+var indicator_7 = new _LCARSComponents.LCARSIndicator("indicator_7", "on_blink", 970, 680, 150, 60, _LCARS.LCARS.ES_LABEL_E | _LCARS.LCARS.ES_RECT_RND_E | _LCARS.LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_7);
+setInterval(function () {
+    indicator_7.onBlink();
+}, 500);
+
 var rect_2 = new _LCARSComponents.LCARSRectangle("RECT2", "rect2", 10, 750, 150, 60, _LCARS.LCARS.EC_ORANGE);
 testScreen.addComponent(rect_2);
 var rect_3 = new _LCARSComponents.LCARSRectangle("RECT3", "rect3", 10, 820, 150, 60, _LCARS.LCARS.ES_RECT_RND | _LCARS.LCARS.EC_ORANGE);
 testScreen.addComponent(rect_3);
-var rect_4 = new _LCARSComponents.LCARSRectangle("RECT4", "rect4", 10, 890, 150, 60, _LCARS.LCARS.ES_RECT_RND_W | _LCARS.LCARS.EC_ORANGE);
+var rect_4 = new _LCARSComponents.LCARSRectangle("RECT4", "rect4", 10, 890, 150, 60, _LCARS.LCARS.ES_DISABLED | _LCARS.LCARS.ES_RECT_RND_W | _LCARS.LCARS.EC_ORANGE);
 testScreen.addComponent(rect_4);
 var rect_5 = new _LCARSComponents.LCARSRectangle("RECT5", "rect5", 10, 960, 150, 60, _LCARS.LCARS.ES_RECT_RND_E | _LCARS.LCARS.EC_ORANGE);
 testScreen.addComponent(rect_5);
@@ -3971,7 +4250,7 @@ setInterval(function () {
 }, 3000);
 button_1.setVisible(false);
 setInterval(function () {
-    button_1.onBlink();
+    button_1.onBlink(10);
 }, 100);
 
 //calendar = new LCARSCalendar("calendar test", "LCARS Body Text", 1490, 850 + LCARS.FONT_BODY_SIZE, LCARS.EF_BODY | LCARS.EC_ORANGE);
@@ -3992,6 +4271,7 @@ testScreen.addComponent(powerButton);
 var powerButton2 = new _LCARSComponents.LCARSButton("power_button2", "Power", 180, 890, 0, _LCARS.LCARS.ES_RECT_RND | _LCARS.LCARS.EC_ORANGE);
 powerButton2.setIcon(_ICONS.ICONS.POWER_BUTTON_SVG);
 powerButton2.setIconPosition(_LCARS.LCARS.ES_LABEL_W);
+powerButton2.setEnabled(false);
 testScreen.addComponent(powerButton2);
 
 var powerButton3 = new _LCARSComponents.LCARSButton("power_button3", "Power", 180, 960, 0, _LCARS.LCARS.ES_LABEL_W | _LCARS.LCARS.ES_RECT_RND | _LCARS.LCARS.EC_ORANGE);
@@ -4021,6 +4301,20 @@ testScreen.addComponent(icon6);
 var icon7 = new _LCARSComponents.LCARSIcon("battery_empty_icon", "", 590, 750, _LCARS.LCARS.EC_RED, _ICONS.ICONS.BATTERY_EMPTY);
 icon7.setBlinking(true, null, _LCARS.LCARS.BLINK_DURATION_ERROR);
 testScreen.addComponent(icon7);
+
+var icon8 = new _LCARSComponents.LCARSIcon("icon8", "", 1130, 680, _LCARS.LCARS.EC_ORANGE, _ICONS.ICONS.NETWORK_CONNECTION);
+testScreen.addComponent(icon8);
+
+var icon9 = new _LCARSComponents.LCARSIcon("icon9", "", 1195, 680, _LCARS.LCARS.EC_ORANGE, _ICONS.ICONS.NETWORK_CONNECTION_NEGATIVE);
+testScreen.addComponent(icon9);
+
+var icon8_disabled = new _LCARSComponents.LCARSIcon("icon8_disabled", "", 1260, 680, _LCARS.LCARS.ES_DISABLED | _LCARS.LCARS.EC_ORANGE, _ICONS.ICONS.NETWORK_CONNECTION);
+testScreen.addComponent(icon8_disabled);
+//icon8_disabled.setEnabled(false);
+
+var icon9_disabled = new _LCARSComponents.LCARSIcon("icon9_disabled", "", 1325, 680, _LCARS.LCARS.EC_ORANGE, _ICONS.ICONS.NETWORK_CONNECTION_NEGATIVE);
+testScreen.addComponent(icon9_disabled);
+icon9_disabled.setEnabled(false);
 
 var weather_icon_heat = new _LCARSComponents.LCARSIcon("weather_heat_warn", "", 675, 300, _LCARS.LCARS.EC_RED, _ICONS.ICONS.WEATHER_HEAT_WARNING);
 weather_icon_heat.setBlinking(true);

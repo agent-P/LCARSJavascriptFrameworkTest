@@ -1,6 +1,6 @@
 import { LCARS } from '../../LCARS-javascript-lib-es6/src/LCARS';
 import { ICONS } from '../../LCARS-javascript-lib-es6/src/ICONS';
-import { LCARSCorner, LCARSText, LCARSRectangle, LCARSButton, LCARSTextArea, LCARSKeypad, LCARSClock, LCARSCalendar, LCARSIcon, LCARSEllipsisSpinner } from '../../LCARS-javascript-lib-es6/src/LCARSComponents';
+import { LCARSCorner, LCARSText, LCARSRectangle, LCARSButton, LCARSTextArea, LCARSKeypad, LCARSClock, LCARSCalendar, LCARSIcon, LCARSEllipsisSpinner, LCARSIndicator } from '../../LCARS-javascript-lib-es6/src/LCARSComponents';
 import { LCARSBlankScreen, LCARSBasicScreen } from '../../LCARS-javascript-lib-es6/src/LCARSScreens';
 
 
@@ -39,14 +39,35 @@ testScreen.addComponent(ulc8);
 let text_corner = new LCARSText("text_corner", "LCARS Button Text Corner", 1625, 579 + LCARS.FONT_BUTTON_SIZE-3, LCARS.EF_BUTTON | LCARS.EC_ORANGE);
 testScreen.addComponent(text_corner);
 
-let rect_1 = new LCARSRectangle("RECT1", "", 10, 675, 1000, 30, LCARS.EC_ORANGE | LCARS.ES_BLINKING);
-testScreen.addComponent(rect_1);
-rect_1.setVisible(false);
+let indicator_1 = new LCARSIndicator("indicator_1", "indicator_off", 10, 680, 150, 60, LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_1);
+let indicator_2 = new LCARSIndicator("indicator_2", "indicator_on", 170, 680, 150, 60, LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_2);
+indicator_2.on();
+let indicator_3 = new LCARSIndicator("indicator_3", "indicator_warn", 330, 680, 150, 60, LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_3);
+indicator_3.warning();
+let indicator_4 = new LCARSIndicator("indicator_4", "indicator_error", 490, 680, 150, 60, LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_4);
+indicator_4.error();
+let indicator_5 = new LCARSIndicator("indicator_5", "blink_off", 650, 680, 150, 60, LCARS.ES_RECT_RND | LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_5);
+indicator_5.error();
+indicator_5.off();
+let indicator_6 = new LCARSIndicator("indicator_6", "off_blink", 810, 680, 150, 60, LCARS.ES_LABEL_W | LCARS.ES_RECT_RND_W | LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_6);
+indicator_6.on();
+setInterval(function() { indicator_6.offBlink() }, 500);
+let indicator_7 = new LCARSIndicator("indicator_7", "on_blink", 970, 680, 150, 60, LCARS.ES_LABEL_E | LCARS.ES_RECT_RND_E | LCARS.EC_ORANGE);
+testScreen.addComponent(indicator_7);
+setInterval(function() { indicator_7.onBlink() }, 500);
+
+
 let rect_2 = new LCARSRectangle("RECT2", "rect2", 10, 750, 150, 60, LCARS.EC_ORANGE);
 testScreen.addComponent(rect_2);
 let rect_3 = new LCARSRectangle("RECT3", "rect3", 10, 820, 150, 60, LCARS.ES_RECT_RND | LCARS.EC_ORANGE);
 testScreen.addComponent(rect_3);
-let rect_4 = new LCARSRectangle("RECT4", "rect4", 10, 890, 150, 60, LCARS.ES_RECT_RND_W | LCARS.EC_ORANGE);
+let rect_4 = new LCARSRectangle("RECT4", "rect4", 10, 890, 150, 60, LCARS.ES_DISABLED | LCARS.ES_RECT_RND_W | LCARS.EC_ORANGE);
 testScreen.addComponent(rect_4);
 let rect_5 = new LCARSRectangle("RECT5", "rect5", 10, 960, 150, 60, LCARS.ES_RECT_RND_E | LCARS.EC_ORANGE);
 testScreen.addComponent(rect_5);
@@ -164,7 +185,7 @@ setTimeout(function() { button_5.setBlinking(false) }, 10000);
 
 setInterval(function() { button_4.offBlink() }, 3000);
 button_1.setVisible(false);
-setInterval(function() { button_1.onBlink() }, 100);
+setInterval(function() { button_1.onBlink(10) }, 100);
 
 
 //calendar = new LCARSCalendar("calendar test", "LCARS Body Text", 1490, 850 + LCARS.FONT_BODY_SIZE, LCARS.EF_BODY | LCARS.EC_ORANGE);
@@ -185,6 +206,7 @@ testScreen.addComponent(powerButton);
 let powerButton2 = new LCARSButton("power_button2", "Power", 180, 890, 0, LCARS.ES_RECT_RND | LCARS.EC_ORANGE);
 powerButton2.setIcon(ICONS.POWER_BUTTON_SVG);
 powerButton2.setIconPosition(LCARS.ES_LABEL_W);
+powerButton2.setEnabled(false);
 testScreen.addComponent(powerButton2);
 
 let powerButton3 = new LCARSButton("power_button3", "Power", 180, 960, 0, LCARS.ES_LABEL_W | LCARS.ES_RECT_RND | LCARS.EC_ORANGE);
@@ -214,6 +236,20 @@ testScreen.addComponent(icon6);
 let icon7 = new LCARSIcon("battery_empty_icon", "", 590, 750, LCARS.EC_RED, ICONS.BATTERY_EMPTY);
 icon7.setBlinking(true, null, LCARS.BLINK_DURATION_ERROR);
 testScreen.addComponent(icon7);
+
+let icon8 = new LCARSIcon("icon8", "", 1130, 680, LCARS.EC_ORANGE, ICONS.NETWORK_CONNECTION);
+testScreen.addComponent(icon8);
+
+let icon9 = new LCARSIcon("icon9", "", 1195, 680, LCARS.EC_ORANGE, ICONS.NETWORK_CONNECTION_NEGATIVE);
+testScreen.addComponent(icon9);
+
+let icon8_disabled = new LCARSIcon("icon8_disabled", "", 1260, 680, LCARS.ES_DISABLED | LCARS.EC_ORANGE, ICONS.NETWORK_CONNECTION);
+testScreen.addComponent(icon8_disabled);
+//icon8_disabled.setEnabled(false);
+
+let icon9_disabled = new LCARSIcon("icon9_disabled", "", 1325, 680, LCARS.EC_ORANGE, ICONS.NETWORK_CONNECTION_NEGATIVE);
+testScreen.addComponent(icon9_disabled);
+icon9_disabled.setEnabled(false);
 
 let weather_icon_heat = new LCARSIcon("weather_heat_warn", "", 675, 300, LCARS.EC_RED, ICONS.WEATHER_HEAT_WARNING);
 weather_icon_heat.setBlinking(true);
